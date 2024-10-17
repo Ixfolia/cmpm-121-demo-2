@@ -26,27 +26,45 @@ let drawing = false;
 let x = 0;
 let y = 0;
 
+// Array to store the points
+let points: {x: number, y: number}[][] = [];
+let currentLine: {x: number, y: number}[] = [];
+
 // Function to start drawing
 canvas.addEventListener("mousedown", (e) => {
     x = e.offsetX;
     y = e.offsetY;
     drawing = true;
+    currentLine = [{x, y}];
 });
 
 // Function to draw on the canvas
 canvas.addEventListener("mousemove", (e) => {
     if (!drawing) return;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
     x = e.offsetX;
     y = e.offsetY;
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    currentLine.push({x, y});
+    canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // Function to stop drawing
 canvas.addEventListener("mouseup", () => {
     drawing = false;
+    points.push(currentLine);
+    currentLine = [];
+});
+
+// Function to redraw the lines
+canvas.addEventListener("drawing-changed", () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    points.concat([currentLine]).forEach(line => {
+        for(let i = 0; i < line.length - 1; i++) {
+            ctx.beginPath();
+            ctx.moveTo(line[i].x, line[i].y);
+            ctx.lineTo(line[i + 1].x, line[i + 1].y);
+            ctx.stroke();
+        }
+    });
 });
 
 // Add a clear button
@@ -56,5 +74,7 @@ app.appendChild(clearButton);
 
 // Function to clear the canvas
 clearButton.addEventListener("click", () => {
+    points = [];
+    currentLine = [];
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
