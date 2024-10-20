@@ -29,10 +29,37 @@ let currentLine: ReturnType<typeof createMarkerLine> | null = null;
 let lines: ReturnType<typeof createMarkerLine>[] = [];
 let redoStack: ReturnType<typeof createMarkerLine>[] = [];
 
+// Add buttons for marker tools
+const thinButton = document.createElement("button");
+thinButton.textContent = "Thin";
+app.appendChild(thinButton);
+
+const thickButton = document.createElement("button");
+thickButton.textContent = "Thick";
+app.appendChild(thickButton);
+
+// Variable to store the current line thickness
+let currentThickness = 1; // Default to thin
+
+// Function to set the current tool
+function setTool(thickness: number, button: HTMLButtonElement) {
+  currentThickness = thickness;
+  thinButton.classList.remove("selectedTool");
+  thickButton.classList.remove("selectedTool");
+  button.classList.add("selectedTool");
+}
+
+// Set initial tool
+setTool(1, thinButton);
+
+// Event listeners for tool buttons
+thinButton.addEventListener("click", () => setTool(1, thinButton));
+thickButton.addEventListener("click", () => setTool(5, thickButton));
+
 // Function to start drawing
 canvas.addEventListener("mousedown", (e) => {
   drawing = true;
-  currentLine = createMarkerLine(e.offsetX, e.offsetY);
+  currentLine = createMarkerLine(e.offsetX, e.offsetY, currentThickness);
 });
 
 // Function to draw on the canvas
@@ -98,7 +125,7 @@ redoButton.addEventListener("click", () => {
 });
 
 // Function to create a marker line
-function createMarkerLine(initialX: number, initialY: number) {
+function createMarkerLine(initialX: number, initialY: number, thickness: number) {
   const points = [{ x: initialX, y: initialY }];
 
   return {
@@ -112,6 +139,7 @@ function createMarkerLine(initialX: number, initialY: number) {
       for (let i = 1; i < points.length; i++) {
         ctx.lineTo(points[i].x, points[i].y);
       }
+      ctx.lineWidth = thickness;
       ctx.stroke();
     },
     getPoints() {
@@ -119,4 +147,3 @@ function createMarkerLine(initialX: number, initialY: number) {
     }
   };
 }
-
