@@ -60,13 +60,23 @@ thickButton.addEventListener("click", () => setTool(5, thickButton));
 canvas.addEventListener("mousedown", (e) => {
   drawing = true;
   currentLine = createMarkerLine(e.offsetX, e.offsetY, currentThickness);
+  toolPreview = null; // Hide tool preview while drawing
 });
 
 // Function to draw on the canvas
 canvas.addEventListener("mousemove", (e) => {
-  if (!drawing || !currentLine) return;
-  currentLine.drag(e.offsetX, e.offsetY);
-  canvas.dispatchEvent(new Event("drawing-changed"));
+  if (!drawing) {
+    if (!toolPreview) {
+      toolPreview = createToolPreview(e.offsetX, e.offsetY, currentThickness);
+    } else {
+      toolPreview.updatePosition(e.offsetX, e.offsetY);
+      toolPreview.updateThickness(currentThickness);
+    }
+    canvas.dispatchEvent(new Event("tool-moved"));
+  } else if (currentLine) {
+    currentLine.drag(e.offsetX, e.offsetY);
+    canvas.dispatchEvent(new Event("drawing-changed"));
+  }
 });
 
 // Function to stop drawing
@@ -83,6 +93,9 @@ canvas.addEventListener("mouseup", () => {
 canvas.addEventListener("drawing-changed", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   lines.concat(currentLine ? [currentLine] : []).forEach((line) => line.display(ctx));
+  if (toolPreview && !drawing) {
+    toolPreview.draw(ctx);
+  }
 });
 
 // Add a clear button
@@ -125,7 +138,11 @@ redoButton.addEventListener("click", () => {
 });
 
 // Function to create a marker line
-function createMarkerLine(initialX: number, initialY: number, thickness: number) {
+function createMarkerLine(
+  initialX: number,
+  initialY: number,
+  thickness: number
+) {
   const points = [{ x: initialX, y: initialY }];
 
   return {
@@ -144,6 +161,33 @@ function createMarkerLine(initialX: number, initialY: number, thickness: number)
     },
     getPoints() {
       return points;
+    },
+  };
+}
+
+// Function to create a tool preview
+function createToolPreview(x: number, y: number, thickness: number) {
+  return {
+    draw(ctx: CanvasRenderingContext2D) {
+      ctx.beginPath();
+      ctx.arc(x, y, thickness / 2, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.fill();
+    },
+    updatePosition(newX: number, newY: number) {
+      x = newX;
+      y = newY;
+    },
+    updateThickness(newThickness: number) {
+      thickness = newThickness;
     }
   };
 }
+
+// Global variable to hold the tool preview object
+let toolPreview: ReturnType<typeof createToolPreview> | null = null;
+
+// Event listener for tool-moved event
+canvas.addEventListener("tool-moved", () => {
+  canvas.dispatchEvent(new Event("drawing-changed"));
+});
