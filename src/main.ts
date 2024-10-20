@@ -23,11 +23,11 @@ const ctx = canvas.getContext("2d")!;
 
 // Variables to keep track of the mouse position and drawing state
 let drawing = false;
-let currentLine: ReturnType<typeof createMarkerLine> | null = null;
+let currentLine: ReturnType<typeof createMarkerLine | typeof createSticker> | null = null;
 
 // Arrays to store the lines and redo stack
-let lines: ReturnType<typeof createMarkerLine>[] = [];
-let redoStack: ReturnType<typeof createMarkerLine>[] = [];
+let lines: ReturnType<typeof createMarkerLine | typeof createSticker>[] = [];
+let redoStack: ReturnType<typeof createMarkerLine | typeof createSticker>[] = [];
 
 // Add buttons for marker tools
 const thinButton = document.createElement("button");
@@ -38,15 +38,38 @@ const thickButton = document.createElement("button");
 thickButton.textContent = "Thick";
 app.appendChild(thickButton);
 
+// Add buttons for stickers
+const stickers = ["😀", "🎉", "🌟"];
+stickers.forEach((sticker) => {
+  const button = document.createElement("button");
+  button.textContent = sticker;
+  app.appendChild(button);
+  button.addEventListener("click", () => setSticker(sticker, button));
+});
+
 // Variable to store the current line thickness
 let currentThickness = 1; // Default to thin
+let currentSticker: string | null = null;
 
 // Function to set the current tool
 function setTool(thickness: number, button: HTMLButtonElement) {
   currentThickness = thickness;
+  currentSticker = null;
   thinButton.classList.remove("selectedTool");
   thickButton.classList.remove("selectedTool");
+  document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
   button.classList.add("selectedTool");
+}
+
+// Function to set the current sticker
+function setSticker(sticker: string, button: HTMLButtonElement) {
+  currentSticker = sticker;
+  thinButton.classList.remove("selectedTool");
+  thickButton.classList.remove("selectedTool");
+  document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
+  button.classList.add("selectedTool");
+  toolPreview = null; // Reset tool preview
+  canvas.dispatchEvent(new Event("tool-moved"));
 }
 
 // Set initial tool
@@ -59,18 +82,30 @@ thickButton.addEventListener("click", () => setTool(5, thickButton));
 // Function to start drawing
 canvas.addEventListener("mousedown", (e) => {
   drawing = true;
-  currentLine = createMarkerLine(e.offsetX, e.offsetY, currentThickness);
+  if (currentSticker) {
+    currentLine = createSticker(e.offsetX, e.offsetY, currentSticker);
+  } else {
+    currentLine = createMarkerLine(e.offsetX, e.offsetY, currentThickness);
+  }
   toolPreview = null; // Hide tool preview while drawing
 });
 
 // Function to draw on the canvas
 canvas.addEventListener("mousemove", (e) => {
   if (!drawing) {
-    if (!toolPreview) {
-      toolPreview = createToolPreview(e.offsetX, e.offsetY, currentThickness);
+    if (currentSticker) {
+      if (!toolPreview) {
+        toolPreview = createStickerPreview(e.offsetX, e.offsetY, currentSticker);
+      } else {
+        toolPreview.updatePosition(e.offsetX, e.offsetY);
+      }
     } else {
-      toolPreview.updatePosition(e.offsetX, e.offsetY);
-      toolPreview.updateThickness(currentThickness);
+      if (!toolPreview) {
+        toolPreview = createToolPreview(e.offsetX, e.offsetY, currentThickness);
+      } else {
+        toolPreview.updatePosition(e.offsetX, e.offsetY);
+        toolPreview.updateThickness(currentThickness);
+      }
     }
     canvas.dispatchEvent(new Event("tool-moved"));
   } else if (currentLine) {
@@ -184,8 +219,36 @@ function createToolPreview(x: number, y: number, thickness: number) {
   };
 }
 
+// Function to create a sticker preview
+function createStickerPreview(x: number, y: number, sticker: string) {
+  return {
+    draw(ctx: CanvasRenderingContext2D) {
+      ctx.font = "30px Arial";
+      ctx.fillText(sticker, x, y);
+    },
+    updatePosition(newX: number, newY: number) {
+      x = newX;
+      y = newY;
+    }
+  };
+}
+
+// Function to create a sticker
+function createSticker(x: number, y: number, sticker: string) {
+  return {
+    drag(newX: number, newY: number) {
+      x = newX;
+      y = newY;
+    },
+    display(ctx: CanvasRenderingContext2D) {
+      ctx.font = "30px Arial";
+      ctx.fillText(sticker, x, y);
+    }
+  };
+}
+
 // Global variable to hold the tool preview object
-let toolPreview: ReturnType<typeof createToolPreview> | null = null;
+let toolPreview: ReturnType<typeof createToolPreview | typeof createStickerPreview> | null = null;
 
 // Event listener for tool-moved event
 canvas.addEventListener("tool-moved", () => {
