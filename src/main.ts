@@ -23,50 +23,39 @@ const ctx = canvas.getContext("2d")!;
 
 // Variables to keep track of the mouse position and drawing state
 let drawing = false;
-let x = 0;
-let y = 0;
+let currentLine: ReturnType<typeof createMarkerLine> | null = null;
 
-// Arrays to store the points and redo stack
-let points: { x: number; y: number }[][] = [];
-let redoStack: { x: number; y: number }[][] = [];
-let currentLine: { x: number; y: number }[] = [];
+// Arrays to store the lines and redo stack
+let lines: ReturnType<typeof createMarkerLine>[] = [];
+let redoStack: ReturnType<typeof createMarkerLine>[] = [];
 
 // Function to start drawing
 canvas.addEventListener("mousedown", (e) => {
-  x = e.offsetX;
-  y = e.offsetY;
   drawing = true;
-  currentLine = [{ x, y }];
+  currentLine = createMarkerLine(e.offsetX, e.offsetY);
 });
 
 // Function to draw on the canvas
 canvas.addEventListener("mousemove", (e) => {
-  if (!drawing) return;
-  x = e.offsetX;
-  y = e.offsetY;
-  currentLine.push({ x, y });
+  if (!drawing || !currentLine) return;
+  currentLine.drag(e.offsetX, e.offsetY);
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // Function to stop drawing
 canvas.addEventListener("mouseup", () => {
+  if (currentLine) {
+    lines.push(currentLine);
+    currentLine = null;
+  }
   drawing = false;
-  points.push(currentLine);
-  currentLine = [];
-  canvas.dispatchEvent(new Event("drawing-changed")); // Moved this line here
+  canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // Function to redraw the lines
 canvas.addEventListener("drawing-changed", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  points.concat([currentLine]).forEach((line) => {
-    for (let i = 0; i < line.length - 1; i++) {
-      ctx.beginPath();
-      ctx.moveTo(line[i].x, line[i].y);
-      ctx.lineTo(line[i + 1].x, line[i + 1].y);
-      ctx.stroke();
-    }
-  });
+  lines.concat(currentLine ? [currentLine] : []).forEach((line) => line.display(ctx));
 });
 
 // Add a clear button
@@ -76,8 +65,8 @@ app.appendChild(clearButton);
 
 // Function to clear the canvas
 clearButton.addEventListener("click", () => {
-  points = [];
-  currentLine = [];
+  lines = [];
+  currentLine = null;
   redoStack = [];
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
@@ -89,8 +78,8 @@ app.appendChild(undoButton);
 
 // Function to undo the last line
 undoButton.addEventListener("click", () => {
-  if (points.length > 0) {
-    redoStack.push(points.pop()!);
+  if (lines.length > 0) {
+    redoStack.push(lines.pop()!);
     canvas.dispatchEvent(new Event("drawing-changed"));
   }
 });
@@ -103,7 +92,31 @@ app.appendChild(redoButton);
 // Function to redo the last line
 redoButton.addEventListener("click", () => {
   if (redoStack.length > 0) {
-    points.push(redoStack.pop()!);
+    lines.push(redoStack.pop()!);
     canvas.dispatchEvent(new Event("drawing-changed"));
   }
 });
+
+// Function to create a marker line
+function createMarkerLine(initialX: number, initialY: number) {
+  const points = [{ x: initialX, y: initialY }];
+
+  return {
+    drag(x: number, y: number) {
+      points.push({ x, y });
+    },
+    display(ctx: CanvasRenderingContext2D) {
+      if (points.length < 2) return;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.stroke();
+    },
+    getPoints() {
+      return points;
+    }
+  };
+}
+
