@@ -219,12 +219,29 @@ const stickers = [
   { name: "Star", emoji: "🌟" }
 ];
 
-// Add buttons for stickers
-stickers.forEach((sticker) => {
+// Function to create a sticker button
+function createStickerButton(sticker: { name: string; emoji: string }) {
   const button = document.createElement("button");
   button.textContent = sticker.emoji;
   app.appendChild(button);
   button.addEventListener("click", () => setSticker(sticker.emoji, button));
+}
+
+// Add buttons for initial stickers
+stickers.forEach(createStickerButton);
+
+// Add a button for creating a custom sticker
+const customStickerButton = document.createElement("button");
+customStickerButton.textContent = "Create Custom Sticker";
+app.appendChild(customStickerButton);
+
+customStickerButton.addEventListener("click", () => {
+  const customEmoji = prompt("Enter your custom sticker:", "🙂");
+  if (customEmoji) {
+    const newSticker = { name: "Custom", emoji: customEmoji };
+    stickers.push(newSticker);
+    createStickerButton(newSticker);
+  }
 });
 
 // Function to create a sticker preview
@@ -254,6 +271,7 @@ function createSticker(x: number, y: number, sticker: string) {
     }
   };
 }
+
 
 // Global variable to hold the tool preview object
 let toolPreview: ReturnType<typeof createToolPreview | typeof createStickerPreview> | null = null;
