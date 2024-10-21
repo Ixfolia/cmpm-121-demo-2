@@ -54,16 +54,7 @@ function setTool(thickness: number, button: HTMLButtonElement) {
   button.classList.add("selectedTool");
 }
 
-// Function to set the current sticker
-function setSticker(sticker: string, button: HTMLButtonElement) {
-  currentSticker = sticker;
-  thinButton.classList.remove("selectedTool");
-  thickButton.classList.remove("selectedTool");
-  document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
-  button.classList.add("selectedTool");
-  toolPreview = null; // Reset tool preview
-  canvas.dispatchEvent(new Event("tool-moved"));
-}
+
 
 // Set initial tool
 setTool(1, thinButton);
@@ -210,6 +201,17 @@ function createToolPreview(x: number, y: number, thickness: number) {
       thickness = newThickness;
     }
   };
+}
+
+// Function to set the current sticker
+function setSticker(sticker: string, button: HTMLButtonElement) {
+  currentSticker = sticker;
+  thinButton.classList.remove("selectedTool");
+  thickButton.classList.remove("selectedTool");
+  document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
+  button.classList.add("selectedTool");
+  toolPreview = null; // Reset tool preview
+  canvas.dispatchEvent(new Event("tool-moved"));
 }
 
 // Define the available set of stickers
