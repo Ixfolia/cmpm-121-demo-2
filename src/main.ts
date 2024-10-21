@@ -38,14 +38,7 @@ const thickButton = document.createElement("button");
 thickButton.textContent = "Thick";
 app.appendChild(thickButton);
 
-// Add buttons for stickers
-const stickers = ["😀", "🎉", "🌟"];
-stickers.forEach((sticker) => {
-  const button = document.createElement("button");
-  button.textContent = sticker;
-  app.appendChild(button);
-  button.addEventListener("click", () => setSticker(sticker, button));
-});
+
 
 // Variable to store the current line thickness
 let currentThickness = 1; // Default to thin
@@ -218,6 +211,21 @@ function createToolPreview(x: number, y: number, thickness: number) {
     }
   };
 }
+
+// Define the available set of stickers
+const stickers = [
+  { name: "Smiley", emoji: "😀" },
+  { name: "Party", emoji: "🎉" },
+  { name: "Star", emoji: "🌟" }
+];
+
+// Add buttons for stickers
+stickers.forEach((sticker) => {
+  const button = document.createElement("button");
+  button.textContent = sticker.emoji;
+  app.appendChild(button);
+  button.addEventListener("click", () => setSticker(sticker.emoji, button));
+});
 
 // Function to create a sticker preview
 function createStickerPreview(x: number, y: number, sticker: string) {
