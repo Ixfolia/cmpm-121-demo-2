@@ -126,7 +126,12 @@ canvas.addEventListener("mousedown", (e) => {
   if (currentEmoji) {
     currentLine = createEmoji(e.offsetX, e.offsetY, currentEmoji, sliderValue);
   } else {
-    currentLine = createBrushLine(e.offsetX, e.offsetY, currentThickness, currentColor);
+    currentLine = createBrushLine(
+      e.offsetX,
+      e.offsetY,
+      currentThickness,
+      currentColor
+    );
   }
   toolPreview = null; // Hide tool preview while drawing
 });
@@ -305,17 +310,32 @@ slider.addEventListener("input", (e) => {
   sliderValue = parseInt((e.target as HTMLInputElement).value, 10);
   if (currentEmoji) {
     // Update emoji rotation
-    toolPreview = createEmojiPreview(toolPreview.x, toolPreview.y, currentEmoji, sliderValue);
+    toolPreview = createEmojiPreview(
+      toolPreview.x,
+      toolPreview.y,
+      currentEmoji,
+      sliderValue
+    );
   } else {
     // Update brush color hue
     currentColor = `hsl(${sliderValue}, 100%, 50%)`;
-    toolPreview = createBrushPreview(toolPreview.x, toolPreview.y, currentThickness, currentColor);
+    toolPreview = createBrushPreview(
+      toolPreview.x,
+      toolPreview.y,
+      currentThickness,
+      currentColor
+    );
   }
   canvas.dispatchEvent(new Event("tool-moved"));
 });
 
 // Function to create a brush preview
-function createBrushPreview(x: number, y: number, thickness: number, color: string) {
+function createBrushPreview(
+  x: number,
+  y: number,
+  thickness: number,
+  color: string
+) {
   return {
     draw(ctx: CanvasRenderingContext2D) {
       ctx.beginPath();
@@ -329,13 +349,17 @@ function createBrushPreview(x: number, y: number, thickness: number, color: stri
     },
     updateThickness(newThickness: number) {
       thickness = newThickness;
-    }
+    },
   };
 }
 
-
 // Function to create an emoji preview
-function createEmojiPreview(x: number, y: number, emoji: string, rotation: number = 0) {
+function createEmojiPreview(
+  x: number,
+  y: number,
+  emoji: string,
+  rotation: number = 0
+) {
   return {
     draw(ctx: CanvasRenderingContext2D) {
       ctx.save();
@@ -348,12 +372,17 @@ function createEmojiPreview(x: number, y: number, emoji: string, rotation: numbe
     updatePosition(newX: number, newY: number) {
       x = newX;
       y = newY;
-    }
+    },
   };
 }
 
 // Function to create an emoji
-function createEmoji(x: number, y: number, emoji: string, rotation: number = 0) {
+function createEmoji(
+  x: number,
+  y: number,
+  emoji: string,
+  rotation: number = 0
+) {
   return {
     drag(newX: number, newY: number) {
       x = newX;
@@ -366,7 +395,7 @@ function createEmoji(x: number, y: number, emoji: string, rotation: number = 0) 
       ctx.font = "40px Arial"; // Adjusted size
       ctx.fillText(emoji, 0, 0);
       ctx.restore();
-    }
+    },
   };
 }
 
