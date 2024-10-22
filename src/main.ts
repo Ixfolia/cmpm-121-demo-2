@@ -9,6 +9,7 @@ document.title = APP_NAME;
 // Add an h1 element with the app title
 const title = document.createElement("h1");
 title.textContent = APP_NAME;
+title.style.color = "black"; // Set the text color to black
 app.appendChild(title);
 
 // Add a canvas element
@@ -38,7 +39,14 @@ const thickButton = document.createElement("button");
 thickButton.textContent = "Thick";
 app.appendChild(thickButton);
 
-
+// Add buttons for stickers
+const stickers = ["😀", "🎉", "🌟"];
+stickers.forEach((sticker) => {
+  const button = document.createElement("button");
+  button.textContent = sticker;
+  app.appendChild(button);
+  button.addEventListener("click", () => setSticker(sticker, button));
+});
 
 // Variable to store the current line thickness
 let currentThickness = 1; // Default to thin
@@ -54,7 +62,16 @@ function setTool(thickness: number, button: HTMLButtonElement) {
   button.classList.add("selectedTool");
 }
 
-
+// Function to set the current sticker
+function setSticker(sticker: string, button: HTMLButtonElement) {
+  currentSticker = sticker;
+  thinButton.classList.remove("selectedTool");
+  thickButton.classList.remove("selectedTool");
+  document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
+  button.classList.add("selectedTool");
+  toolPreview = null; // Reset tool preview
+  canvas.dispatchEvent(new Event("tool-moved"));
+}
 
 // Set initial tool
 setTool(1, thinButton);
@@ -156,6 +173,40 @@ redoButton.addEventListener("click", () => {
   }
 });
 
+// Add an export button
+const exportButton = document.createElement("button");
+exportButton.textContent = "Export";
+app.appendChild(exportButton);
+
+// Function to export the canvas as a PNG file
+exportButton.addEventListener("click", () => {
+  // Create a new canvas of size 1024x1024
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+  const exportCtx = exportCanvas.getContext("2d")!;
+
+  // Scale the context to 4x
+  exportCtx.scale(4, 4);
+
+  // Execute all items on the display list against the new context
+  lines.forEach((line) => line.display(exportCtx));
+
+  // Trigger a file download with the contents of the canvas as a PNG file
+  exportCanvas.toBlob((blob) => {
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "drawing.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  });
+});
+
 // Function to create a marker line
 function createMarkerLine(
   initialX: number,
@@ -203,49 +254,6 @@ function createToolPreview(x: number, y: number, thickness: number) {
   };
 }
 
-// Function to set the current sticker
-function setSticker(sticker: string, button: HTMLButtonElement) {
-  currentSticker = sticker;
-  thinButton.classList.remove("selectedTool");
-  thickButton.classList.remove("selectedTool");
-  document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
-  button.classList.add("selectedTool");
-  toolPreview = null; // Reset tool preview
-  canvas.dispatchEvent(new Event("tool-moved"));
-}
-
-// Define the available set of stickers
-const stickers = [
-  { name: "Smiley", emoji: "😀" },
-  { name: "Party", emoji: "🎉" },
-  { name: "Star", emoji: "🌟" }
-];
-
-// Function to create a sticker button
-function createStickerButton(sticker: { name: string; emoji: string }) {
-  const button = document.createElement("button");
-  button.textContent = sticker.emoji;
-  app.appendChild(button);
-  button.addEventListener("click", () => setSticker(sticker.emoji, button));
-}
-
-// Add buttons for initial stickers
-stickers.forEach(createStickerButton);
-
-// Add a button for creating a custom sticker
-const customStickerButton = document.createElement("button");
-customStickerButton.textContent = "Create Custom Sticker";
-app.appendChild(customStickerButton);
-
-customStickerButton.addEventListener("click", () => {
-  const customEmoji = prompt("Enter your custom sticker:", "🙂");
-  if (customEmoji) {
-    const newSticker = { name: "Custom", emoji: customEmoji };
-    stickers.push(newSticker);
-    createStickerButton(newSticker);
-  }
-});
-
 // Function to create a sticker preview
 function createStickerPreview(x: number, y: number, sticker: string) {
   return {
@@ -273,7 +281,6 @@ function createSticker(x: number, y: number, sticker: string) {
     }
   };
 }
-
 
 // Global variable to hold the tool preview object
 let toolPreview: ReturnType<typeof createToolPreview | typeof createStickerPreview> | null = null;
