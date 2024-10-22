@@ -24,47 +24,50 @@ const ctx = canvas.getContext("2d")!;
 
 // Variables to keep track of the mouse position and drawing state
 let drawing = false;
-let currentLine: ReturnType<typeof createMarkerLine | typeof createSticker> | null = null;
+let currentLine: ReturnType<typeof createBrushLine | typeof createEmoji> | null = null;
 
 // Arrays to store the lines and redo stack
-let lines: ReturnType<typeof createMarkerLine | typeof createSticker>[] = [];
-let redoStack: ReturnType<typeof createMarkerLine | typeof createSticker>[] = [];
+let lines: ReturnType<typeof createBrushLine | typeof createEmoji>[] = [];
+let redoStack: ReturnType<typeof createBrushLine | typeof createEmoji>[] = [];
 
-// Add buttons for marker tools
+// Add buttons for brush tools
 const thinButton = document.createElement("button");
-thinButton.textContent = "Thin";
+thinButton.textContent = "Thin Brush";
 app.appendChild(thinButton);
 
 const thickButton = document.createElement("button");
-thickButton.textContent = "Thick";
+thickButton.textContent = "Thick Brush";
 app.appendChild(thickButton);
 
-// Add buttons for stickers
-const stickers = ["😀", "🎉", "🌟"];
-stickers.forEach((sticker) => {
+// Add buttons for emojis
+const emojis = ["🐱", "🚀", "🌈"];
+emojis.forEach((emoji) => {
   const button = document.createElement("button");
-  button.textContent = sticker;
+  button.textContent = emoji;
   app.appendChild(button);
-  button.addEventListener("click", () => setSticker(sticker, button));
+  button.addEventListener("click", () => setEmoji(emoji, button));
 });
 
-// Variable to store the current line thickness
-let currentThickness = 1; // Default to thin
-let currentSticker: string | null = null;
+// Adjusted thickness values
+const THIN_LINE_THICKNESS = 2;
+const THICK_LINE_THICKNESS = 8;
+
+let currentThickness = THIN_LINE_THICKNESS; // Default to thin
+let currentEmoji: string | null = null;
 
 // Function to set the current tool
 function setTool(thickness: number, button: HTMLButtonElement) {
   currentThickness = thickness;
-  currentSticker = null;
+  currentEmoji = null;
   thinButton.classList.remove("selectedTool");
   thickButton.classList.remove("selectedTool");
   document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
   button.classList.add("selectedTool");
 }
 
-// Function to set the current sticker
-function setSticker(sticker: string, button: HTMLButtonElement) {
-  currentSticker = sticker;
+// Function to set the current emoji
+function setEmoji(emoji: string, button: HTMLButtonElement) {
+  currentEmoji = emoji;
   thinButton.classList.remove("selectedTool");
   thickButton.classList.remove("selectedTool");
   document.querySelectorAll("button").forEach((btn) => btn.classList.remove("selectedTool"));
@@ -74,19 +77,19 @@ function setSticker(sticker: string, button: HTMLButtonElement) {
 }
 
 // Set initial tool
-setTool(1, thinButton);
+setTool(THIN_LINE_THICKNESS, thinButton);
 
 // Event listeners for tool buttons
-thinButton.addEventListener("click", () => setTool(1, thinButton));
-thickButton.addEventListener("click", () => setTool(5, thickButton));
+thinButton.addEventListener("click", () => setTool(THIN_LINE_THICKNESS, thinButton));
+thickButton.addEventListener("click", () => setTool(THICK_LINE_THICKNESS, thickButton));
 
 // Function to start drawing
 canvas.addEventListener("mousedown", (e) => {
   drawing = true;
-  if (currentSticker) {
-    currentLine = createSticker(e.offsetX, e.offsetY, currentSticker);
+  if (currentEmoji) {
+    currentLine = createEmoji(e.offsetX, e.offsetY, currentEmoji);
   } else {
-    currentLine = createMarkerLine(e.offsetX, e.offsetY, currentThickness);
+    currentLine = createBrushLine(e.offsetX, e.offsetY, currentThickness);
   }
   toolPreview = null; // Hide tool preview while drawing
 });
@@ -94,15 +97,15 @@ canvas.addEventListener("mousedown", (e) => {
 // Function to draw on the canvas
 canvas.addEventListener("mousemove", (e) => {
   if (!drawing) {
-    if (currentSticker) {
+    if (currentEmoji) {
       if (!toolPreview) {
-        toolPreview = createStickerPreview(e.offsetX, e.offsetY, currentSticker);
+        toolPreview = createEmojiPreview(e.offsetX, e.offsetY, currentEmoji);
       } else {
         toolPreview.updatePosition(e.offsetX, e.offsetY);
       }
     } else {
       if (!toolPreview) {
-        toolPreview = createToolPreview(e.offsetX, e.offsetY, currentThickness);
+        toolPreview = createBrushPreview(e.offsetX, e.offsetY, currentThickness);
       } else {
         toolPreview.updatePosition(e.offsetX, e.offsetY);
         toolPreview.updateThickness(currentThickness);
@@ -207,8 +210,8 @@ exportButton.addEventListener("click", () => {
   });
 });
 
-// Function to create a marker line
-function createMarkerLine(
+// Function to create a brush line
+function createBrushLine(
   initialX: number,
   initialY: number,
   thickness: number
@@ -235,8 +238,8 @@ function createMarkerLine(
   };
 }
 
-// Function to create a tool preview
-function createToolPreview(x: number, y: number, thickness: number) {
+// Function to create a brush preview
+function createBrushPreview(x: number, y: number, thickness: number) {
   return {
     draw(ctx: CanvasRenderingContext2D) {
       ctx.beginPath();
@@ -254,12 +257,12 @@ function createToolPreview(x: number, y: number, thickness: number) {
   };
 }
 
-// Function to create a sticker preview
-function createStickerPreview(x: number, y: number, sticker: string) {
+// Function to create an emoji preview
+function createEmojiPreview(x: number, y: number, emoji: string) {
   return {
     draw(ctx: CanvasRenderingContext2D) {
-      ctx.font = "30px Arial";
-      ctx.fillText(sticker, x, y);
+      ctx.font = "40px Arial"; // Adjusted size
+      ctx.fillText(emoji, x, y);
     },
     updatePosition(newX: number, newY: number) {
       x = newX;
@@ -268,22 +271,22 @@ function createStickerPreview(x: number, y: number, sticker: string) {
   };
 }
 
-// Function to create a sticker
-function createSticker(x: number, y: number, sticker: string) {
+// Function to create an emoji
+function createEmoji(x: number, y: number, emoji: string) {
   return {
     drag(newX: number, newY: number) {
       x = newX;
       y = newY;
     },
     display(ctx: CanvasRenderingContext2D) {
-      ctx.font = "30px Arial";
-      ctx.fillText(sticker, x, y);
+      ctx.font = "40px Arial"; // Adjusted size
+      ctx.fillText(emoji, x, y);
     }
   };
 }
 
 // Global variable to hold the tool preview object
-let toolPreview: ReturnType<typeof createToolPreview | typeof createStickerPreview> | null = null;
+let toolPreview: ReturnType<typeof createBrushPreview | typeof createEmojiPreview> | null = null;
 
 // Event listener for tool-moved event
 canvas.addEventListener("tool-moved", () => {
