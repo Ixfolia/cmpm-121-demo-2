@@ -17,7 +17,11 @@ const canvas = document.createElement("canvas");
 canvas.width = 256;
 canvas.height = 256;
 canvas.id = "myCanvas";
-app.appendChild(canvas);
+//create a canvas div
+const canvasDiv = document.createElement("div");
+canvasDiv.id = "canvasDiv";
+app.appendChild(canvasDiv);
+canvasDiv.appendChild(canvas);
 
 // Get the 2D context of the canvas
 const ctx = canvas.getContext("2d")!;
@@ -408,3 +412,6 @@ let toolPreview: ReturnType<
 canvas.addEventListener("tool-moved", () => {
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
+
+// remove the cursor while hovering over the canvas
+canvas.style.cursor = "none";
