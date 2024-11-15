@@ -1,5 +1,10 @@
 import "./style.css";
 
+// constant values
+const CANVAS_SIZE = 256;
+const FONT_SIZE = "40px";
+const EXPORT_CANVAS_SIZE = 1024;
+
 const APP_NAME = "drawer";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
@@ -14,8 +19,8 @@ app.appendChild(title);
 
 // Add a canvas element
 const canvas = document.createElement("canvas");
-canvas.width = 256;
-canvas.height = 256;
+canvas.width = CANVAS_SIZE;
+canvas.height = CANVAS_SIZE;
 canvas.id = "myCanvas";
 //create a canvas div
 const canvasDiv = document.createElement("div");
@@ -238,8 +243,8 @@ app.appendChild(exportButton);
 exportButton.addEventListener("click", () => {
   // Create a new canvas of size 1024x1024
   const exportCanvas = document.createElement("canvas");
-  exportCanvas.width = 1024;
-  exportCanvas.height = 1024;
+  exportCanvas.width = EXPORT_CANVAS_SIZE;
+  exportCanvas.height = EXPORT_CANVAS_SIZE;
   const exportCtx = exportCanvas.getContext("2d")!;
 
   // Scale the context to 4x
@@ -369,7 +374,7 @@ function createEmojiPreview(
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate((rotation * Math.PI) / 180);
-      ctx.font = "40px Arial"; // Adjusted size
+      ctx.font = `${FONT_SIZE}px Arial`; // Adjusted size
       ctx.fillText(emoji, 0, 0);
       ctx.restore();
     },
